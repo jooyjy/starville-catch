@@ -37,6 +37,15 @@ main{position:relative;z-index:1;display:flex;flex-direction:column;align-items:
 .play b{display:block;font-size:20px}
 .play span{display:block;font-family:Cairo,sans-serif;font-size:14px;opacity:.85}
 .play .go{margin-left:auto;font-size:22px;font-weight:700}
+.prod{pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.prod.tap{animation:float 6s ease-in-out infinite,tap .35s ease-out}
+@keyframes tap{40%{scale:.92}100%{scale:1}}
+.bub{position:fixed;z-index:2;pointer-events:none;border-radius:50%;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);
+  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.95) 0 8%,rgba(255,255,255,0) 18%),radial-gradient(circle at 70% 75%,rgba(255,214,107,.35),rgba(255,255,255,0) 40%),radial-gradient(circle,rgba(255,255,255,0) 58%,rgba(186,240,255,.45) 72%,rgba(255,190,240,.4) 86%,rgba(255,255,255,.85) 100%);
+  box-shadow:inset 0 0 6px rgba(255,255,255,.6);animation:bubrise var(--t) ease-out forwards}
+.bub.pop{animation:pop .25s ease-out forwards}
+@keyframes bubrise{0%{transform:translate(0,0) scale(.2);opacity:0}12%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1);opacity:.95}}
+@keyframes pop{from{transform:translate(var(--dx),var(--dy)) scale(1);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(1.5);opacity:0}}
 @keyframes float{50%{transform:translateY(-16px)}}
 @keyframes tw{0%,100%{opacity:.25;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -68,5 +77,19 @@ main>*:nth-child(2){animation-delay:.1s}main>*:nth-child(3){animation-delay:.2s}
     <a class="play alt" href="#web-link" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 3 2.6 15 0 18M12 3c-2.6 3-2.6 15 0 18"/></svg><div><b>Play on Web</b><span>العب من الويب</span></div><em class="go">→</em></a>
   </div>
 </main>
+<script>
+(()=>{
+function bubbles(el){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height*.3;
+  for(let i=0;i<14;i++){const b=document.createElement('i');b.className='bub';
+    const s=10+Math.random()*34,t=1.4+Math.random()*1.4;
+    b.style.cssText=`left:${cx+(Math.random()-.5)*r.width*.6}px;top:${cy+(Math.random()-.5)*r.height*.3}px;--s:${s}px;--t:${t}s;--dx:${(Math.random()-.5)*160}px;--dy:${-(120+Math.random()*260)}px;animation-delay:${i*40}ms`;
+    document.body.appendChild(b);
+    b.addEventListener('animationend',()=>{if(b.classList.contains('pop'))b.remove();else b.classList.add('pop')})}
+  el.classList.remove('tap');void el.offsetWidth;el.classList.add('tap')}
+document.querySelectorAll('.prod').forEach(el=>el.addEventListener('pointerdown',e=>{e.preventDefault();bubbles(el)}));
+})();
+</script>
 </body>
 </html>
