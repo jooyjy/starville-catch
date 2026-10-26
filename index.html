@@ -38,11 +38,11 @@ main{position:relative;z-index:1;display:flex;flex-direction:column;align-items:
 .play span{display:block;font-family:Cairo,sans-serif;font-size:14px;opacity:.85}
 .play .go{margin-left:auto;font-size:22px;font-weight:700}
 .prod{pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.prod{transition:scale .14s ease-out,rotate .5s cubic-bezier(.3,1.8,.5,1)}
+.prod{transition:scale .14s ease-out,rotate .5s cubic-bezier(.3,1.8,.5,1),translate .55s cubic-bezier(.2,1.5,.4,1)}
+.prod.home{transition:scale .14s ease-out,rotate .5s cubic-bezier(.3,1.8,.5,1),translate 1.4s cubic-bezier(.45,0,.3,1)}
 .prod:hover{scale:1.04}
-.prod.held{scale:1.1 .86;transition:scale .12s ease-out,rotate .12s ease-out}
 .prod.jelly{animation:float 6s ease-in-out infinite,jelly .7s ease-out}
-@keyframes jelly{0%{scale:1.1 .86}25%{scale:.9 1.12}45%{scale:1.06 .95}65%{scale:.97 1.03}85%{scale:1.01 .99}100%{scale:1}}
+@keyframes jelly{0%{scale:1}10%{scale:1.12 .84}25%{scale:.9 1.12}45%{scale:1.06 .95}65%{scale:.97 1.03}85%{scale:1.01 .99}100%{scale:1}}
 .bub{position:fixed;left:0;top:0;pointer-events:auto;cursor:pointer;border-radius:50%;width:var(--s);height:var(--s);will-change:transform;
   background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.95) 0 9%,rgba(255,255,255,0) 19%),radial-gradient(circle at 70% 75%,rgba(255,214,107,.3),rgba(255,255,255,0) 40%),radial-gradient(circle,rgba(255,255,255,.04) 56%,rgba(186,240,255,.45) 72%,rgba(255,190,240,.4) 86%,rgba(255,255,255,.9) 100%);
   box-shadow:inset 0 0 6px rgba(255,255,255,.6),0 4px 10px rgba(0,60,65,.12)}
@@ -115,18 +115,22 @@ function tick(t){
 function press(el,e){
   e.preventDefault();
   if(!el.dataset.base)el.dataset.base=parseFloat(getComputedStyle(el).rotate)||0;
-  const r=el.getBoundingClientRect(),off=(e.clientX-(r.left+r.width/2))/(r.width/2);
-  el.style.rotate=(+el.dataset.base-off*14)+'deg';                     // tilt away from the finger
-  el.classList.remove('jelly');el.classList.add('held');
-  try{el.setPointerCapture(e.pointerId)}catch(_){}
-  spawn(el)}
-function release(el){
-  if(!el.classList.contains('held'))return;
-  el.classList.remove('held');void el.offsetWidth;el.classList.add('jelly');
-  el.style.rotate=el.dataset.base+'deg'}
+  const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  let vx=cx-e.clientX,vy=cy-e.clientY;const len=Math.hypot(vx,vy)||1;vx/=len;vy/=len;
+  if(Math.abs(vx)<.2&&Math.abs(vy)<.2){vx=cx<innerWidth/2?1:-1}
+  const D=70+Math.random()*50;let [ox,oy]=(el.style.translate||'0px 0px').split(' ').map(parseFloat);
+  let nx=(ox||0)+vx*D,ny=(oy||0)+vy*D;                               // run away from the finger
+  const lim=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  const mX=-r.width*.3,mY=-r.height*.3;ox=ox||0;oy=oy||0;
+  nx=lim(nx,mX-r.left+ox,innerWidth-mX-r.right+ox);ny=lim(ny,mY-r.top+oy,innerHeight-mY-r.bottom+oy);
+  el.classList.remove('home');
+  el.style.translate=`${nx}px ${ny}px`;
+  el.style.rotate=(+el.dataset.base+(vx>0?1:-1)*18)+'deg';
+  el.classList.remove('jelly');void el.offsetWidth;el.classList.add('jelly');
+  spawn(el);
+  clearTimeout(el._t);el._t=setTimeout(()=>{el.classList.add('home');el.style.translate='0px 0px';el.style.rotate=el.dataset.base+'deg'},1100)}
 document.querySelectorAll('.prod').forEach(el=>{
   el.addEventListener('pointerdown',e=>press(el,e));
-  ['pointerup','pointercancel','lostpointercapture'].forEach(n=>el.addEventListener(n,()=>release(el)));
   el.addEventListener('animationend',e=>{if(e.animationName==='jelly')el.classList.remove('jelly')});
 });
 })();
