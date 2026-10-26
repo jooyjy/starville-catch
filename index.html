@@ -24,7 +24,7 @@ body{background:radial-gradient(120% 90% at 50% 40%,#1bb8c4 0%,var(--teal) 45%,v
 .p3{left:9%;bottom:6%;rotate:10deg;animation-delay:-3s}
 .p4{right:8%;bottom:8%;rotate:-10deg;animation-delay:-4.5s}
 main{position:relative;z-index:1;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:26px;padding-block:24px;width:100%}
-.logo,.tag,.btns{pointer-events:auto}
+.logo,.tag,.btns,.hint{pointer-events:auto}
 .logo{width:min(320px,70vw);height:auto;filter:drop-shadow(0 4px 12px rgba(0,60,65,.25))}
 .tag{display:inline-flex;align-items:center;gap:8px;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-size:13px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);padding:6px 16px;border-radius:999px;backdrop-filter:blur(6px)}
 .tag svg{width:12px;height:12px;fill:var(--gold)}
@@ -49,6 +49,12 @@ main{position:relative;z-index:1;pointer-events:none;display:flex;flex-direction
   box-shadow:inset 0 0 6px rgba(255,255,255,.6),0 4px 10px rgba(0,60,65,.12)}
 .bub.pop{transition:opacity .22s,scale .22s;scale:1.6;opacity:0;pointer-events:none}
 .dot{position:fixed;left:0;top:0;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff;pointer-events:none;transition:transform .35s ease-out,opacity .35s}
+.hint{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;opacity:.92;margin-top:4px}
+.hint .ar{font-family:Cairo,sans-serif}
+.hint .finger{display:inline-block;font-size:18px;animation:poke 1.6s ease-in-out infinite}
+.hint .touch{display:none}
+@media (hover:none){.hint .mouse{display:none}.hint .touch{display:inline}}
+@keyframes poke{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px) rotate(-10deg)}}
 @keyframes float{50%{transform:translateY(-16px)}}
 @keyframes tw{0%,100%{opacity:.25;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -56,8 +62,11 @@ main{position:relative;z-index:1;pointer-events:none;display:flex;flex-direction
 main>*{animation:rise .7s ease-out both}
 main>*:nth-child(2){animation-delay:.1s}main>*:nth-child(3){animation-delay:.2s}
 @media (max-width:700px){
-  .prod{height:clamp(90px,17vh,150px);opacity:.9}
-  .p1{left:-4%;top:3%}.p2{right:-3%;top:2%}.p3{left:-4%;bottom:2%}.p4{right:-4%;bottom:3%}
+  .prod{height:clamp(96px,15vh,140px)}
+  .p1{left:5%;top:2.5%}.p2{right:5%;top:2.5%}.p3{left:6%;bottom:2.5%}.p4{right:6%;bottom:2.5%}
+  .ring{display:none}
+  main{gap:20px}
+  .logo{width:min(260px,66vw)}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -79,6 +88,7 @@ main>*:nth-child(2){animation-delay:.1s}main>*:nth-child(3){animation-delay:.2s}
     <a class="play" href="https://www.snapchat.com/lens/edbc8ee18b044c2695a1be9716e7e23c?utm=qr" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg><div><b>Play on Snapchat</b><span>العب على سناب شات</span></div><em class="go">→</em></a>
     <a class="play alt" href="#web-link" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 3 2.6 15 0 18M12 3c-2.6 3-2.6 15 0 18"/></svg><div><b>Play on Web</b><span>العب من الويب</span></div><em class="go">→</em></a>
   </div>
+  <div class="hint"><span class="finger">👆</span><span><span class="mouse">Try to catch the products, they’re shy!</span><span class="touch">Tap the products, they’re shy!</span><br><span class="ar">جرّب تمسك المنتجات… هتهرب منك!</span></span></div>
 </main>
 <script>
 (()=>{
@@ -89,8 +99,9 @@ function spawn(el){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
   const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
   const out=Math.atan2(innerHeight/2-cy,innerWidth/2-cx);           // toward the open middle
-  for(let i=0;i<9;i++){
-    const a=out+(Math.random()-.5)*2.2,s=14+Math.random()*30;
+  const small=innerWidth<700,n=small?6:9;
+  for(let i=0;i<n;i++){
+    const a=out+(Math.random()-.5)*2.2,s=small?10+Math.random()*18:14+Math.random()*30;
     const x=cx+Math.cos(a)*(r.width/2+s*.6),y=cy+Math.sin(a)*(r.height/2+s*.4);
     const b=document.createElement('i');b.className='bub';b.style.setProperty('--s',s+'px');
     scene.insertBefore(b,first);
