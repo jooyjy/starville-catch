@@ -40,12 +40,11 @@ main{position:relative;z-index:1;display:flex;flex-direction:column;align-items:
 .prod{pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .prod.tap{animation:float 6s ease-in-out infinite,tap .35s ease-out}
 @keyframes tap{40%{scale:.92}100%{scale:1}}
-.bub{position:fixed;z-index:2;pointer-events:none;border-radius:50%;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);
-  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.95) 0 8%,rgba(255,255,255,0) 18%),radial-gradient(circle at 70% 75%,rgba(255,214,107,.35),rgba(255,255,255,0) 40%),radial-gradient(circle,rgba(255,255,255,0) 58%,rgba(186,240,255,.45) 72%,rgba(255,190,240,.4) 86%,rgba(255,255,255,.85) 100%);
-  box-shadow:inset 0 0 6px rgba(255,255,255,.6);animation:bubrise var(--t) ease-out forwards}
-.bub.pop{animation:pop .25s ease-out forwards}
-@keyframes bubrise{0%{transform:translate(0,0) scale(.2);opacity:0}12%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1);opacity:.95}}
-@keyframes pop{from{transform:translate(var(--dx),var(--dy)) scale(1);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(1.5);opacity:0}}
+.bub{position:fixed;left:0;top:0;pointer-events:auto;cursor:pointer;border-radius:50%;width:var(--s);height:var(--s);will-change:transform;
+  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.95) 0 9%,rgba(255,255,255,0) 19%),radial-gradient(circle at 70% 75%,rgba(255,214,107,.3),rgba(255,255,255,0) 40%),radial-gradient(circle,rgba(255,255,255,.04) 56%,rgba(186,240,255,.45) 72%,rgba(255,190,240,.4) 86%,rgba(255,255,255,.9) 100%);
+  box-shadow:inset 0 0 6px rgba(255,255,255,.6),0 4px 10px rgba(0,60,65,.12)}
+.bub.pop{transition:opacity .22s,scale .22s;scale:1.6;opacity:0;pointer-events:none}
+.dot{position:fixed;left:0;top:0;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff;pointer-events:none;transition:transform .35s ease-out,opacity .35s}
 @keyframes float{50%{transform:translateY(-16px)}}
 @keyframes tw{0%,100%{opacity:.25;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -79,16 +78,39 @@ main>*:nth-child(2){animation-delay:.1s}main>*:nth-child(3){animation-delay:.2s}
 </main>
 <script>
 (()=>{
-function bubbles(el){
+const scene=document.querySelector('.scene'),first=scene.querySelector('.prod');
+let bubs=[],raf=0,last=0,mx=-999,my=-999;
+addEventListener('pointermove',e=>{mx=e.clientX;my=e.clientY});
+function spawn(el){
   if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-  const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height*.3;
-  for(let i=0;i<14;i++){const b=document.createElement('i');b.className='bub';
-    const s=10+Math.random()*34,t=1.4+Math.random()*1.4;
-    b.style.cssText=`left:${cx+(Math.random()-.5)*r.width*.6}px;top:${cy+(Math.random()-.5)*r.height*.3}px;--s:${s}px;--t:${t}s;--dx:${(Math.random()-.5)*160}px;--dy:${-(120+Math.random()*260)}px;animation-delay:${i*40}ms`;
-    document.body.appendChild(b);
-    b.addEventListener('animationend',()=>{if(b.classList.contains('pop'))b.remove();else b.classList.add('pop')})}
-  el.classList.remove('tap');void el.offsetWidth;el.classList.add('tap')}
-document.querySelectorAll('.prod').forEach(el=>el.addEventListener('pointerdown',e=>{e.preventDefault();bubbles(el)}));
+  const r=el.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const out=Math.atan2(innerHeight/2-cy,innerWidth/2-cx);           // toward the open middle
+  for(let i=0;i<9;i++){
+    const a=out+(Math.random()-.5)*2.2,s=14+Math.random()*30;
+    const x=cx+Math.cos(a)*(r.width/2+s*.6),y=cy+Math.sin(a)*(r.height/2+s*.4);
+    const b=document.createElement('i');b.className='bub';b.style.setProperty('--s',s+'px');
+    scene.insertBefore(b,first);
+    const o={el:b,x,y,s,vx:Math.cos(a)*(1.2+Math.random()*1.6),vy:Math.sin(a)*(1.2+Math.random()*1.6)-.4,ph:Math.random()*6,age:-i*4,life:260+Math.random()*160,sc:0};
+    b.addEventListener('pointerdown',e=>{e.stopPropagation();pop(o)});
+    bubs.push(o)}
+  el.classList.remove('tap');void el.offsetWidth;el.classList.add('tap');
+  if(!raf)raf=requestAnimationFrame(tick)}
+function pop(o){if(o.dead)return;o.dead=1;o.el.classList.add('pop');setTimeout(()=>o.el.remove(),240);
+  const cx=o.x+o.s/2,cy=o.y+o.s/2;
+  for(let k=0;k<6;k++){const d=document.createElement('i');d.className='dot';d.style.transform=`translate(${cx}px,${cy}px)`;document.body.appendChild(d);
+    const a=k*Math.PI/3,R=o.s*.9;requestAnimationFrame(()=>{d.style.transform=`translate(${cx+Math.cos(a)*R}px,${cy+Math.sin(a)*R}px) scale(.3)`;d.style.opacity=0});setTimeout(()=>d.remove(),380)}}
+function tick(t){
+  for(const o of bubs){if(o.dead)continue;o.age++;if(o.age<0){o.el.style.opacity=0;continue}
+    o.sc=Math.min(1,o.sc+.08);
+    o.vx*=.985;o.vy=o.vy*.985-.012;                                  // drift out, then float up
+    const dx=o.x+o.s/2-mx,dy=o.y+o.s/2-my,d2=dx*dx+dy*dy,R=90+o.s;   // shy of the cursor
+    if(d2<R*R){const d=Math.sqrt(d2)||1,f=(R-d)/R*.9;o.vx+=dx/d*f;o.vy+=dy/d*f}
+    o.x+=o.vx+Math.sin(o.age/18+o.ph)*.5;o.y+=o.vy;
+    const fade=o.age>o.life?Math.max(0,1-(o.age-o.life)/40):1;
+    o.el.style.opacity=fade;o.el.style.transform=`translate(${o.x}px,${o.y}px) scale(${o.sc*(1+Math.sin(o.age/10+o.ph)*.03)})`;
+    if(fade===0||o.y<-80||o.x<-80||o.x>innerWidth+80){o.dead=1;o.el.remove()}}
+  bubs=bubs.filter(o=>!o.dead);raf=bubs.length?requestAnimationFrame(tick):0}
+document.querySelectorAll('.prod').forEach(el=>el.addEventListener('pointerdown',e=>{e.preventDefault();spawn(el)}));
 })();
 </script>
 </body>
